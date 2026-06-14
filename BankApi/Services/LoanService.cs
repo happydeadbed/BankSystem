@@ -13,72 +13,67 @@ namespace BankApi.Services
             _context = context;
         }
 
-        public void GeneratePaymentSchedule(Loan loan)
+        public async Task GeneratePaymentSchedule(Loan loan)
         {
-            decimal monthlyAmount = loan.OriginalAmount / loan.TotalMonths;
-            for (int i = 0; i < loan.TotalMonths; i++)
+            decimal monthlyPayment = loan.Amount / loan.DurationMonths;
+
+            for (int i = 1; i <= loan.DurationMonths; i++)
             {
-                var payment = new LoanPayment
+                _context.LoanPayments.Add(new LoanPayment
                 {
                     LoanId = loan.Id,
-                    DueDate = loan.StartDate.AddMonths(i + 1),
-                    Amount = monthlyAmount,
-                    Status = "Pending"
-                };
-                _context.LoanPayments.Add(payment);
+                    DueDate = loan.StartDate.AddMonths(i),
+                    AmountDue = monthlyPayment,
+                    AmountPaid = 0,
+                    IsPaid = false
+                });
             }
-            _context.SaveChanges();
+
+            await _context.SaveChangesAsync();
         }
 
         public async Task CheckAndMarkMissedPayments()
         {
-            var pendingPayments = await _context.LoanPayments
-                .Where(p => p.Status == "Pending" && p.DueDate < DateTime.Now)
+            var overduePayments = await _context.LoanPayments
+                .Where(p => !p.IsPaid && p.DueDate < DateTime.UtcNow)
                 .ToListAsync();
 
-            foreach (var payment in pendingPayments)
-            {
-                payment.Status = "Missed";
-            }
-
             await _context.SaveChangesAsync();
+
             await CheckAndDefaultLoans();
         }
 
         public async Task CheckAndDefaultLoans()
         {
-            var activeLoans = await _context.Loans
+            var loans = await _context.Loans
+                .Include(l => l.Payments)
                 .Where(l => l.Status == "Active")
-                .Include(l => l.LoanPayments)
                 .ToListAsync();
 
-            foreach (var loan in activeLoans)
+            foreach (var loan in loans)
             {
-                var payments = loan.LoanPayments
-                    .OrderBy(p => p.DueDate)
-                    .ToList();
-
                 int consecutiveMissed = 0;
-                int maxConsecutive = 0;
 
-                foreach (var payment in payments)
+                foreach (var payment in loan.Payments.OrderBy(p => p.DueDate))
                 {
-                    if (payment.Status == "Missed")
+                    if (!payment.IsPaid &&
+                        payment.DueDate < DateTime.UtcNow)
                     {
                         consecutiveMissed++;
-                        if (consecutiveMissed > maxConsecutive)
-                            maxConsecutive = consecutiveMissed;
                     }
                     else
                     {
                         consecutiveMissed = 0;
                     }
-                }
 
-                if (maxConsecutive >= 4)
-                {
-                    loan.Status = "Defaulted";
-                    await CreateMarketplaceListing(loan);
+                    if (consecutiveMissed >= 4)
+                    {
+                        loan.Status = "Defaulted";
+
+                        await CreateMarketplaceListing(loan);
+
+                        break;
+                    }
                 }
             }
 
@@ -87,28 +82,22 @@ namespace BankApi.Services
 
         public async Task CreateMarketplaceListing(Loan loan)
         {
-            var alreadyListed = await _context.MarketplaceListings
-                .AnyAsync(m => m.LoanId == loan.Id);
+            bool exists = await _context.MarketplaceListings
+                .AnyAsync(x => x.LoanId == loan.Id);
 
-            if (alreadyListed) return;
+            if (exists)
+                return;
 
-            var paidAmount = await _context.LoanPayments
-                .Where(p => p.LoanId == loan.Id && p.Status == "Paid")
-                .SumAsync(p => p.Amount);
-
-            var remainingBalance = loan.OriginalAmount - paidAmount;
-            var listedPrice = remainingBalance + (loan.OriginalAmount * 0.20m);
-
-            _context.MarketplaceListings.Add(new MarketplaceListing
+            var listing = new MarketplaceListing
             {
+                ListingNumber = $"LST-{Guid.NewGuid().ToString()[..8]}",
                 LoanId = loan.Id,
-                CollateralDescription = loan.CollateralDescription,
-                CollateralValue = loan.CollateralValue,
-                OriginalLoanAmount = loan.OriginalAmount,
-                RemainingBalance = remainingBalance,
-                ListedPrice = listedPrice,
+                CustomerId = loan.CustomerId,
+                ListingDate = DateTime.UtcNow,
                 Status = "Listed"
-            });
+            };
+
+            _context.MarketplaceListings.Add(listing);
 
             await _context.SaveChangesAsync();
         }

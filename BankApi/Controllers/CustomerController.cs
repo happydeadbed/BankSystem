@@ -1,14 +1,13 @@
 ﻿using BankApi.Data;
-using BankApi.Models;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-
 using Microsoft.EntityFrameworkCore;
+
 namespace BankApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class CustomerController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -18,51 +17,75 @@ namespace BankApi.Controllers
             _context = context;
         }
 
-        [Authorize]
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            try
-            {
-                var customers = await _context.Customers.ToListAsync();
-                return Ok(customers);
-            }
-            catch (Exception ex) { return StatusCode(500, ex.Message); }
+            var customers = await _context.Customers.ToListAsync();
+            return Ok(customers);
         }
 
-        [Authorize]
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, Customer model)
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
         {
-            try
-            {
-                var customer = await _context.Customers.FindAsync(id);
-                if (customer == null) return NotFound("Customer not found.");
+            var customer = await _context.Customers
+                .FirstOrDefaultAsync(x => x.Id == id);
 
-                customer.FullName = model.FullName;
-                customer.Username = model.Username;
-                customer.Password = model.Password;
+            if (customer == null)
+                return NotFound();
 
-                await _context.SaveChangesAsync();
-                return Ok(customer);
-            }
-            catch (Exception ex) { return StatusCode(500, ex.Message); }
+            return Ok(customer);
         }
 
-        [Authorize]
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, Models.Customer model)
+        {
+            var customer = await _context.Customers.FindAsync(id);
+
+            if (customer == null)
+                return NotFound();
+
+            customer.FullName = model.FullName;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(customer);
+        }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            try
-            {
-                var customer = await _context.Customers.FindAsync(id);
-                if (customer == null) return NotFound("Customer not found.");
+            var customer = await _context.Customers.FindAsync(id);
 
-                _context.Customers.Remove(customer);
-                await _context.SaveChangesAsync();
-                return Ok("Customer deleted successfully.");
-            }
-            catch (Exception ex) { return StatusCode(500, ex.Message); }
+            if (customer == null)
+                return NotFound();
+
+            _context.Customers.Remove(customer);
+
+            await _context.SaveChangesAsync();
+
+            return Ok("Customer deleted");
+        }
+
+        [HttpGet("summary/{id}")]
+        public async Task<IActionResult> CustomerSummary(int id)
+        {
+            var customer = await _context.Customers
+                .Include(c => c.BankAccounts)
+                .Include(c => c.Loans)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (customer == null)
+                return NotFound();
+
+            return Ok(new
+            {
+                CustomerId = customer.Id,
+                customer.CustomerNumber,
+                customer.FullName,
+                TotalBalance = customer.BankAccounts.Sum(a => a.Balance),
+                AccountCount = customer.BankAccounts.Count,
+                LoanCount = customer.Loans.Count
+            });
         }
     }
 }

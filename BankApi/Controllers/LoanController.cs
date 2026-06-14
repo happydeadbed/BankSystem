@@ -1,8 +1,8 @@
 ﻿using BankApi.Data;
+using BankApi.DTOs;
 using BankApi.Models;
 using BankApi.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,94 +10,101 @@ namespace BankApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class LoanController : ControllerBase
     {
         private readonly AppDbContext _context;
         private readonly LoanService _loanService;
 
-        public LoanController(AppDbContext context, LoanService loanService)
+        public LoanController(
+            AppDbContext context,
+            LoanService loanService)
         {
             _context = context;
             _loanService = loanService;
         }
 
-        [Authorize]
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            try
-            {
-                var loans = await _context.Loans
-                    .Include(l => l.Customer)
-                    .Include(l => l.Account)
-                    .ToListAsync();
-                return Ok(loans);
-            }
-            catch (Exception ex) { return StatusCode(500, ex.Message); }
+            var loans = await _context.Loans
+                .Include(l => l.Customer)
+                .Include(l => l.Payments)
+                .ToListAsync();
+
+            return Ok(loans);
         }
 
-        [Authorize]
         [HttpPost]
-        public async Task<IActionResult> IssueLoan(Loan model)
+        public async Task<IActionResult> CreateLoan(CreateLoanDto dto)
         {
-            try
+            var loan = new Loan
             {
-                model.MonthlyAmount = model.OriginalAmount / model.TotalMonths;
-                model.StartDate = DateTime.Now;
-                model.EndDate = DateTime.Now.AddMonths(model.TotalMonths);
-                model.Status = "Active";
+                LoanNumber = $"LN-{DateTime.Now.Ticks}",
+                CustomerId = dto.CustomerId,
+                Amount = dto.Amount,
+                InterestRate = dto.InterestRate,
+                DurationMonths = dto.DurationMonths,
+                StartDate = DateTime.UtcNow,
+                Status = "Active"
+            };
 
-                _context.Loans.Add(model);
-                await _context.SaveChangesAsync();
+            _context.Loans.Add(loan);
 
-                _loanService.GeneratePaymentSchedule(model);
+            await _context.SaveChangesAsync();
 
-                return Ok(model);
-            }
-            catch (Exception ex) { return StatusCode(500, ex.Message); }
+            await _loanService.GeneratePaymentSchedule(loan);
+
+            return Ok(loan);
         }
 
-        [Authorize]
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var loan = await _context.Loans
+                .Include(l => l.Payments)
+                .FirstOrDefaultAsync(l => l.Id == id);
+
+            if (loan == null)
+                return NotFound();
+
+            return Ok(loan);
+        }
+
         [HttpGet("{id}/payments")]
         public async Task<IActionResult> GetPayments(int id)
         {
-            try
-            {
-                var payments = await _context.LoanPayments
-                    .Where(p => p.LoanId == id)
-                    .OrderBy(p => p.DueDate)
-                    .ToListAsync();
-                return Ok(payments);
-            }
-            catch (Exception ex) { return StatusCode(500, ex.Message); }
+            var payments = await _context.LoanPayments
+                .Where(p => p.LoanId == id)
+                .OrderBy(p => p.DueDate)
+                .ToListAsync();
+
+            return Ok(payments);
         }
 
-        [Authorize]
-        [HttpPost("payment/{id}/pay")]
-        public async Task<IActionResult> MarkPaid(int id)
+        [HttpPost("payment/{paymentId}")]
+        public async Task<IActionResult> PayLoan(int paymentId)
         {
-            try
-            {
-                var payment = await _context.LoanPayments.FindAsync(id);
-                if (payment == null) return NotFound("Payment not found.");
+            var payment = await _context.LoanPayments
+                .FindAsync(paymentId);
 
-                payment.Status = "Paid";
-                await _context.SaveChangesAsync();
-                return Ok("Payment marked as paid.");
-            }
-            catch (Exception ex) { return StatusCode(500, ex.Message); }
+            if (payment == null)
+                return NotFound();
+
+            payment.IsPaid = true;
+            payment.AmountPaid = payment.AmountDue;
+
+            await _context.SaveChangesAsync();
+
+            return Ok("Payment successful");
         }
 
-        [Authorize]
         [HttpPost("check-missed")]
-        public async Task<IActionResult> CheckMissed()
+        public async Task<IActionResult> CheckMissedPayments()
         {
-            try
-            {
-                await _loanService.CheckAndMarkMissedPayments();
-                return Ok("Missed payments checked and updated.");
-            }
-            catch (Exception ex) { return StatusCode(500, ex.Message); }
+            await _loanService.CheckAndMarkMissedPayments();
+
+            return Ok("Missed payments checked");
         }
     }
 }

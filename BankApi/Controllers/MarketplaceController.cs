@@ -1,7 +1,5 @@
 ﻿using BankApi.Data;
-using BankApi.Models;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,6 +7,7 @@ namespace BankApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class MarketplaceController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -18,38 +17,68 @@ namespace BankApi.Controllers
             _context = context;
         }
 
-        [Authorize]
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            try
-            {
-                var listings = await _context.MarketplaceListings
-                    .Include(m => m.Loan)
-                    .ToListAsync();
-                return Ok(listings);
-            }
-            catch (Exception ex) { return StatusCode(500, ex.Message); }
+            var listings = await _context.MarketplaceListings
+                .ToListAsync();
+
+            return Ok(listings);
         }
 
-        [Authorize]
-        [HttpPost("{id}/sell")]
-        public async Task<IActionResult> Sell(int id, MarketplaceListing model)
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
         {
-            try
-            {
-                var listing = await _context.MarketplaceListings.FindAsync(id);
-                if (listing == null) return NotFound("Listing not found.");
-                if (listing.Status == "Sold") return BadRequest("Already sold.");
+            var listing = await _context.MarketplaceListings
+                .FirstOrDefaultAsync(x => x.Id == id);
 
-                listing.Status = "Sold";
-                listing.BuyerName = model.BuyerName;
-                listing.SoldAt = DateTime.Now;
+            if (listing == null)
+                return NotFound();
 
-                await _context.SaveChangesAsync();
-                return Ok("Listing sold successfully.");
-            }
-            catch (Exception ex) { return StatusCode(500, ex.Message); }
+            return Ok(listing);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Create(Models.MarketplaceListing listing)
+        {
+            listing.ListingNumber = $"LST-{DateTime.Now.Ticks}";
+            listing.ListingDate = DateTime.UtcNow;
+
+            _context.MarketplaceListings.Add(listing);
+
+            await _context.SaveChangesAsync();
+
+            return Ok(listing);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, Models.MarketplaceListing model)
+        {
+            var listing = await _context.MarketplaceListings.FindAsync(id);
+
+            if (listing == null)
+                return NotFound();
+
+            listing.Status = model.Status;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(listing);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var listing = await _context.MarketplaceListings.FindAsync(id);
+
+            if (listing == null)
+                return NotFound();
+
+            _context.MarketplaceListings.Remove(listing);
+
+            await _context.SaveChangesAsync();
+
+            return Ok("Listing deleted");
         }
     }
 }

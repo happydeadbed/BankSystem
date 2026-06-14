@@ -5,7 +5,42 @@
     "version": "1.0"
   },
   "paths": {
-    "/api/Auth/login": {
+    "/api/Admin": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Admin/{id}": {
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Auth/admin-login": {
       "post": {
         "tags": [
           "Auth"
@@ -14,17 +49,110 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Admin"
+                "$ref": "#/components/schemas/LoginDto"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/Admin"
+                "$ref": "#/components/schemas/LoginDto"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/Admin"
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Auth/customer-login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Auth/register-customer": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Customer"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Customer"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Customer"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Auth/register-admin": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterAdminDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterAdminDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterAdminDto"
               }
             }
           }
@@ -140,37 +268,26 @@
         }
       }
     },
-    "/api/BankAccount/{id}/deposit": {
+    "/api/BankAccount/deposit": {
       "post": {
         "tags": [
           "BankAccount"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
         ],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Transaction"
+                "$ref": "#/components/schemas/DepositDto"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/Transaction"
+                "$ref": "#/components/schemas/DepositDto"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/Transaction"
+                "$ref": "#/components/schemas/DepositDto"
               }
             }
           }
@@ -182,37 +299,26 @@
         }
       }
     },
-    "/api/BankAccount/{id}/withdraw": {
+    "/api/BankAccount/withdraw": {
       "post": {
         "tags": [
           "BankAccount"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
         ],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Transaction"
+                "$ref": "#/components/schemas/WithdrawDto"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/Transaction"
+                "$ref": "#/components/schemas/WithdrawDto"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/Transaction"
+                "$ref": "#/components/schemas/WithdrawDto"
               }
             }
           }
@@ -233,17 +339,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Transaction"
+                "$ref": "#/components/schemas/TransferDto"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/Transaction"
+                "$ref": "#/components/schemas/TransferDto"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/Transaction"
+                "$ref": "#/components/schemas/TransferDto"
               }
             }
           }
@@ -268,6 +374,27 @@
       }
     },
     "/api/Customer/{id}": {
+      "get": {
+        "tags": [
+          "Customer"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
       "put": {
         "tags": [
           "Customer"
@@ -330,6 +457,41 @@
         }
       }
     },
+    "/api/Customer/summary/{id}": {
+      "get": {
+        "tags": [
+          "Customer"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Dashboard/kpis": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
     "/api/Loan": {
       "get": {
         "tags": [
@@ -349,21 +511,44 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Loan"
+                "$ref": "#/components/schemas/CreateLoanDto"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/Loan"
+                "$ref": "#/components/schemas/CreateLoanDto"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/Loan"
+                "$ref": "#/components/schemas/CreateLoanDto"
               }
             }
           }
         },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Loan/{id}": {
+      "get": {
+        "tags": [
+          "Loan"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success"
@@ -394,14 +579,14 @@
         }
       }
     },
-    "/api/Loan/payment/{id}/pay": {
+    "/api/Loan/payment/{paymentId}": {
       "post": {
         "tags": [
           "Loan"
         ],
         "parameters": [
           {
-            "name": "id",
+            "name": "paymentId",
             "in": "path",
             "required": true,
             "schema": {
@@ -439,10 +624,60 @@
             "description": "Success"
           }
         }
+      },
+      "post": {
+        "tags": [
+          "Marketplace"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarketplaceListing"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarketplaceListing"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarketplaceListing"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
       }
     },
-    "/api/Marketplace/{id}/sell": {
-      "post": {
+    "/api/Marketplace/{id}": {
+      "get": {
+        "tags": [
+          "Marketplace"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "put": {
         "tags": [
           "Marketplace"
         ],
@@ -481,28 +716,14 @@
             "description": "Success"
           }
         }
-      }
-    },
-    "/api/Transaction": {
-      "get": {
+      },
+      "delete": {
         "tags": [
-          "Transaction"
-        ],
-        "responses": {
-          "200": {
-            "description": "Success"
-          }
-        }
-      }
-    },
-    "/api/Transaction/{accountId}": {
-      "get": {
-        "tags": [
-          "Transaction"
+          "Marketplace"
         ],
         "parameters": [
           {
-            "name": "accountId",
+            "name": "id",
             "in": "path",
             "required": true,
             "schema": {
@@ -518,7 +739,42 @@
         }
       }
     },
-    "/api/Transaction/{id}/reverse": {
+    "/api/Transaction": {
+      "get": {
+        "tags": [
+          "Transaction"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Transaction/customer/{customerId}": {
+      "get": {
+        "tags": [
+          "Transaction"
+        ],
+        "parameters": [
+          {
+            "name": "customerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/api/Transaction/reverse/{id}": {
       "post": {
         "tags": [
           "Transaction"
@@ -544,24 +800,6 @@
   },
   "components": {
     "schemas": {
-      "Admin": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "name": {
-            "type": "string",
-            "nullable": true
-          },
-          "password": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
       "BankAccount": {
         "type": "object",
         "properties": {
@@ -573,6 +811,13 @@
             "type": "string",
             "nullable": true
           },
+          "customerId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "customer": {
+            "$ref": "#/components/schemas/Customer"
+          },
           "accountType": {
             "type": "string",
             "nullable": true
@@ -581,16 +826,31 @@
             "type": "number",
             "format": "double"
           },
-          "status": {
+          "createdDate": {
             "type": "string",
-            "nullable": true
-          },
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateLoanDto": {
+        "type": "object",
+        "properties": {
           "customerId": {
             "type": "integer",
             "format": "int32"
           },
-          "customer": {
-            "$ref": "#/components/schemas/Customer"
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "interestRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "durationMonths": {
+            "type": "integer",
+            "format": "int32"
           }
         },
         "additionalProperties": false
@@ -610,17 +870,41 @@
             "type": "string",
             "nullable": true
           },
-          "username": {
+          "passwordHash": {
             "type": "string",
             "nullable": true
           },
-          "password": {
-            "type": "string",
-            "nullable": true
-          },
-          "createAT": {
+          "createdDate": {
             "type": "string",
             "format": "date-time"
+          },
+          "bankAccounts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BankAccount"
+            },
+            "nullable": true
+          },
+          "loans": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Loan"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "DepositDto": {
+        "type": "object",
+        "properties": {
+          "accountNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false
@@ -632,6 +916,10 @@
             "type": "integer",
             "format": "int32"
           },
+          "loanNumber": {
+            "type": "string",
+            "nullable": true
+          },
           "customerId": {
             "type": "integer",
             "format": "int32"
@@ -639,22 +927,15 @@
           "customer": {
             "$ref": "#/components/schemas/Customer"
           },
-          "accountId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "account": {
-            "$ref": "#/components/schemas/BankAccount"
-          },
-          "originalAmount": {
+          "amount": {
             "type": "number",
             "format": "double"
           },
-          "monthlyAmount": {
+          "interestRate": {
             "type": "number",
             "format": "double"
           },
-          "totalMonths": {
+          "durationMonths": {
             "type": "integer",
             "format": "int32"
           },
@@ -662,23 +943,11 @@
             "type": "string",
             "format": "date-time"
           },
-          "endDate": {
-            "type": "string",
-            "format": "date-time"
-          },
           "status": {
             "type": "string",
             "nullable": true
           },
-          "collateralDescription": {
-            "type": "string",
-            "nullable": true
-          },
-          "collateralValue": {
-            "type": "number",
-            "format": "double"
-          },
-          "loanPayments": {
+          "payments": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/LoanPayment"
@@ -706,11 +975,28 @@
             "type": "string",
             "format": "date-time"
           },
-          "amount": {
+          "amountDue": {
             "type": "number",
             "format": "double"
           },
-          "status": {
+          "amountPaid": {
+            "type": "number",
+            "format": "double"
+          },
+          "isPaid": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "nullable": true
+          },
+          "password": {
             "type": "string",
             "nullable": true
           }
@@ -724,84 +1010,71 @@
             "type": "integer",
             "format": "int32"
           },
+          "listingNumber": {
+            "type": "string",
+            "nullable": true
+          },
           "loanId": {
             "type": "integer",
             "format": "int32"
           },
-          "loan": {
-            "$ref": "#/components/schemas/Loan"
+          "customerId": {
+            "type": "integer",
+            "format": "int32"
           },
-          "collateralDescription": {
+          "listingDate": {
             "type": "string",
-            "nullable": true
-          },
-          "collateralValue": {
-            "type": "number",
-            "format": "double"
-          },
-          "originalLoanAmount": {
-            "type": "number",
-            "format": "double"
-          },
-          "remainingBalance": {
-            "type": "number",
-            "format": "double"
-          },
-          "listedPrice": {
-            "type": "number",
-            "format": "double"
+            "format": "date-time"
           },
           "status": {
             "type": "string",
-            "nullable": true
-          },
-          "buyerName": {
-            "type": "string",
-            "nullable": true
-          },
-          "soldAt": {
-            "type": "string",
-            "format": "date-time",
             "nullable": true
           }
         },
         "additionalProperties": false
       },
-      "Transaction": {
+      "RegisterAdminDto": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int32"
+          "username": {
+            "type": "string",
+            "nullable": true
           },
-          "transactionType": {
+          "password": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "TransferDto": {
+        "type": "object",
+        "properties": {
+          "fromAccountNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "toAccountNumber": {
             "type": "string",
             "nullable": true
           },
           "amount": {
             "type": "number",
             "format": "double"
-          },
-          "description": {
+          }
+        },
+        "additionalProperties": false
+      },
+      "WithdrawDto": {
+        "type": "object",
+        "properties": {
+          "accountNumber": {
             "type": "string",
             "nullable": true
           },
-          "date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "fromAccountId": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "toAccountId": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
-          "isReversed": {
-            "type": "boolean"
+          "amount": {
+            "type": "number",
+            "format": "double"
           }
         },
         "additionalProperties": false

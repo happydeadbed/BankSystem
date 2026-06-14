@@ -8,6 +8,7 @@ namespace BankApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class TransactionController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -17,79 +18,75 @@ namespace BankApi.Controllers
             _context = context;
         }
 
-        [Authorize]
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetTransactions()
         {
-            try
-            {
-                var transactions = await _context.Transactions
-                    .OrderByDescending(t => t.Date)
-                    .ToListAsync();
-                return Ok(transactions);
-            }
-            catch (Exception ex) { return StatusCode(500, ex.Message); }
+            var transactions = await _context.Transactions
+                .OrderByDescending(t => t.TransactionDate)
+                .ToListAsync();
+
+            return Ok(transactions);
         }
 
-        [Authorize]
-        [HttpGet("{accountId}")]
-        public async Task<IActionResult> GetByAccount(int accountId)
+        [HttpGet("customer/{customerId}")]
+        public async Task<IActionResult> GetCustomerTransactions(int customerId)
         {
-            try
-            {
-                var transactions = await _context.Transactions
-                    .Where(t => t.FromAccountId == accountId || t.ToAccountId == accountId)
-                    .OrderByDescending(t => t.Date)
-                    .ToListAsync();
-                return Ok(transactions);
-            }
-            catch (Exception ex) { return StatusCode(500, ex.Message); }
+            var transactions = await _context.Transactions
+                .Where(t => t.CustomerId == customerId)
+                .OrderByDescending(t => t.TransactionDate)
+                .ToListAsync();
+
+            return Ok(transactions);
         }
 
-        [Authorize]
-        [HttpPost("{id}/reverse")]
-        public async Task<IActionResult> Reverse(int id)
+        [HttpPost("reverse/{id}")]
+        public async Task<IActionResult> ReverseTransaction(int id)
         {
-            try
+            var transaction = await _context.Transactions
+                .FirstOrDefaultAsync(t => t.Id == id);
+
+            if (transaction == null)
+                return NotFound("Transaction not found");
+
+            if (transaction.IsReversed)
+                return BadRequest("Transaction already reversed");
+
+            if (transaction.TransactionType == "Deposit")
             {
-                var original = await _context.Transactions.FindAsync(id);
-                if (original == null) return NotFound("Transaction not found.");
-                if (original.IsReversed) return BadRequest("Transaction already reversed.");
+                var account = await _context.BankAccounts
+                    .FindAsync(transaction.FromAccountId);
 
-                original.IsReversed = true;
-
-                if (original.TransactionType == "Deposit" && original.FromAccountId.HasValue)
-                {
-                    var acc = await _context.BankAccounts.FindAsync(original.FromAccountId.Value);
-                    if (acc != null) acc.Balance -= original.Amount;
-                }
-                else if (original.TransactionType == "Withdrawal" && original.FromAccountId.HasValue)
-                {
-                    var acc = await _context.BankAccounts.FindAsync(original.FromAccountId.Value);
-                    if (acc != null) acc.Balance += original.Amount;
-                }
-                else if (original.TransactionType == "Transfer")
-                {
-                    var from = await _context.BankAccounts.FindAsync(original.FromAccountId);
-                    var to = await _context.BankAccounts.FindAsync(original.ToAccountId);
-                    if (from != null) from.Balance += original.Amount;
-                    if (to != null) to.Balance -= original.Amount;
-                }
-
-                _context.Transactions.Add(new Transaction
-                {
-                    TransactionType = "Reversal",
-                    Amount = original.Amount,
-                    Description = "Reversal of transaction #" + original.Id,
-                    FromAccountId = original.FromAccountId,
-                    ToAccountId = original.ToAccountId,
-                    Date = DateTime.Now
-                });
-
-                await _context.SaveChangesAsync();
-                return Ok("Transaction reversed.");
+                if (account != null)
+                    account.Balance -= transaction.Amount;
             }
-            catch (Exception ex) { return StatusCode(500, ex.Message); }
+            else if (transaction.TransactionType == "Withdraw")
+            {
+                var account = await _context.BankAccounts
+                    .FindAsync(transaction.FromAccountId);
+
+                if (account != null)
+                    account.Balance += transaction.Amount;
+            }
+            else if (transaction.TransactionType == "Transfer")
+            {
+                var fromAccount = await _context.BankAccounts
+                    .FindAsync(transaction.FromAccountId);
+
+                var toAccount = await _context.BankAccounts
+                    .FindAsync(transaction.ToAccountId);
+
+                if (fromAccount != null)
+                    fromAccount.Balance += transaction.Amount;
+
+                if (toAccount != null)
+                    toAccount.Balance -= transaction.Amount;
+            }
+
+            transaction.IsReversed = true;
+
+            await _context.SaveChangesAsync();
+
+            return Ok("Transaction reversed successfully");
         }
     }
 }

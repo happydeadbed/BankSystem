@@ -1,7 +1,7 @@
 ﻿using BankApi.Data;
+using BankApi.DTOs;
 using BankApi.Models;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,6 +9,7 @@ namespace BankApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class BankAccountController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -18,162 +19,154 @@ namespace BankApi.Controllers
             _context = context;
         }
 
-        [Authorize]
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            try
-            {
-                var accounts = await _context.BankAccounts
-                    .Include(a => a.Customer)
-                    .ToListAsync();
-                return Ok(accounts);
-            }
-            catch (Exception ex) { return StatusCode(500, ex.Message); }
+            var accounts = await _context.BankAccounts
+                .Include(a => a.Customer)
+                .ToListAsync();
+
+            return Ok(accounts);
         }
 
-        [Authorize]
         [HttpPost]
         public async Task<IActionResult> Create(BankAccount account)
         {
-            try
-            {
-                account.AccountNumber = "ACC" + DateTime.Now.Ticks.ToString().Substring(10, 9);
-                account.Balance = 0;
-                account.Status = "Active";
+            account.AccountNumber = $"ACC-{DateTime.Now.Ticks}";
+            account.CreatedDate = DateTime.UtcNow;
+            account.Balance = 0;
 
-                _context.BankAccounts.Add(account);
-                await _context.SaveChangesAsync();
-                return Ok(account);
-            }
-            catch (Exception ex) { return StatusCode(500, ex.Message); }
+            _context.BankAccounts.Add(account);
+
+            await _context.SaveChangesAsync();
+
+            return Ok(account);
         }
 
-        [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, BankAccount model)
         {
-            try
-            {
-                var account = await _context.BankAccounts.FindAsync(id);
-                if (account == null) return NotFound("Account not found.");
+            var account = await _context.BankAccounts.FindAsync(id);
 
-                account.AccountType = model.AccountType;
-                account.Status = model.Status;
+            if (account == null)
+                return NotFound();
 
-                await _context.SaveChangesAsync();
-                return Ok(account);
-            }
-            catch (Exception ex) { return StatusCode(500, ex.Message); }
+            account.AccountType = model.AccountType;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(account);
         }
 
-        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            try
-            {
-                var account = await _context.BankAccounts.FindAsync(id);
-                if (account == null) return NotFound("Account not found.");
-                if (account.Balance > 0)
-                    return BadRequest("Cannot delete account with remaining balance.");
+            var account = await _context.BankAccounts.FindAsync(id);
 
-                _context.BankAccounts.Remove(account);
-                await _context.SaveChangesAsync();
-                return Ok("Account deleted successfully.");
-            }
-            catch (Exception ex) { return StatusCode(500, ex.Message); }
+            if (account == null)
+                return NotFound();
+
+            _context.BankAccounts.Remove(account);
+
+            await _context.SaveChangesAsync();
+
+            return Ok("Account deleted");
         }
 
-        [Authorize]
-        [HttpPost("{id}/deposit")]
-        public async Task<IActionResult> Deposit(int id, Transaction model)
+        [HttpPost("deposit")]
+        public async Task<IActionResult> Deposit(DepositDto dto)
         {
-            try
+            var account = await _context.BankAccounts
+                .FirstOrDefaultAsync(a =>
+                    a.AccountNumber == dto.AccountNumber);
+
+            if (account == null)
+                return NotFound("Account not found");
+
+            account.Balance += dto.Amount;
+
+            _context.Transactions.Add(new Transaction
             {
-                var account = await _context.BankAccounts.FindAsync(id);
-                if (account == null) return NotFound("Account not found.");
-                if (model.Amount <= 0) return BadRequest("Amount must be greater than zero.");
+                TransactionNumber = $"TRN-{DateTime.Now.Ticks}",
+                CustomerId = account.CustomerId,
+                FromAccountId = account.Id,
+                Amount = dto.Amount,
+                TransactionType = "Deposit",
+                TransactionDate = DateTime.UtcNow,
+                IsReversed = false
+            });
 
-                account.Balance += model.Amount;
+            await _context.SaveChangesAsync();
 
-                var transaction = new Transaction
-                {
-                    TransactionType = "Deposit",
-                    Amount = model.Amount,
-                    Description = model.Description,
-                    FromAccountId = account.Id,
-                    Date = DateTime.Now
-                };
-
-                _context.Transactions.Add(transaction);
-                await _context.SaveChangesAsync();
-                return Ok(new { message = "Deposit successful.", balance = account.Balance });
-            }
-            catch (Exception ex) { return StatusCode(500, ex.Message); }
+            return Ok(account);
         }
 
-        [Authorize]
-        [HttpPost("{id}/withdraw")]
-        public async Task<IActionResult> Withdraw(int id, Transaction model)
+        [HttpPost("withdraw")]
+        public async Task<IActionResult> Withdraw(WithdrawDto dto)
         {
-            try
+            var account = await _context.BankAccounts
+                .FirstOrDefaultAsync(a =>
+                    a.AccountNumber == dto.AccountNumber);
+
+            if (account == null)
+                return NotFound("Account not found");
+
+            if (account.Balance < dto.Amount)
+                return BadRequest("Insufficient funds");
+
+            account.Balance -= dto.Amount;
+
+            _context.Transactions.Add(new Transaction
             {
-                var account = await _context.BankAccounts.FindAsync(id);
-                if (account == null) return NotFound("Account not found.");
-                if (model.Amount <= 0) return BadRequest("Amount must be greater than zero.");
-                if (account.Balance < model.Amount) return BadRequest("Insufficient balance.");
+                TransactionNumber = $"TRN-{DateTime.Now.Ticks}",
+                CustomerId = account.CustomerId,
+                FromAccountId = account.Id,
+                Amount = dto.Amount,
+                TransactionType = "Withdraw",
+                TransactionDate = DateTime.UtcNow,
+                IsReversed = false
+            });
 
-                account.Balance -= model.Amount;
+            await _context.SaveChangesAsync();
 
-                var transaction = new Transaction
-                {
-                    TransactionType = "Withdrawal",
-                    Amount = model.Amount,
-                    Description = model.Description,
-                    FromAccountId = account.Id,
-                    Date = DateTime.Now
-                };
-
-                _context.Transactions.Add(transaction);
-                await _context.SaveChangesAsync();
-                return Ok(new { message = "Withdrawal successful.", balance = account.Balance });
-            }
-            catch (Exception ex) { return StatusCode(500, ex.Message); }
+            return Ok(account);
         }
 
-        [Authorize]
         [HttpPost("transfer")]
-        public async Task<IActionResult> Transfer(Transaction model)
+        public async Task<IActionResult> Transfer(TransferDto dto)
         {
-            try
+            var fromAccount = await _context.BankAccounts
+                .FirstOrDefaultAsync(a =>
+                    a.AccountNumber == dto.FromAccountNumber);
+
+            var toAccount = await _context.BankAccounts
+                .FirstOrDefaultAsync(a =>
+                    a.AccountNumber == dto.ToAccountNumber);
+
+            if (fromAccount == null || toAccount == null)
+                return BadRequest("Invalid account number");
+
+            if (fromAccount.Balance < dto.Amount)
+                return BadRequest("Insufficient funds");
+
+            fromAccount.Balance -= dto.Amount;
+            toAccount.Balance += dto.Amount;
+
+            _context.Transactions.Add(new Transaction
             {
-                var from = await _context.BankAccounts.FindAsync(model.FromAccountId);
-                var to = await _context.BankAccounts.FindAsync(model.ToAccountId);
+                TransactionNumber = $"TRN-{DateTime.Now.Ticks}",
+                CustomerId = fromAccount.CustomerId,
+                FromAccountId = fromAccount.Id,
+                ToAccountId = toAccount.Id,
+                Amount = dto.Amount,
+                TransactionType = "Transfer",
+                TransactionDate = DateTime.UtcNow,
+                IsReversed = false
+            });
 
-                if (from == null) return NotFound("Source account not found.");
-                if (to == null) return NotFound("Destination account not found.");
-                if (model.Amount <= 0) return BadRequest("Amount must be greater than zero.");
-                if (from.Balance < model.Amount) return BadRequest("Insufficient balance.");
+            await _context.SaveChangesAsync();
 
-                from.Balance -= model.Amount;
-                to.Balance += model.Amount;
-
-                var transaction = new Transaction
-                {
-                    TransactionType = "Transfer",
-                    Amount = model.Amount,
-                    Description = model.Description,
-                    FromAccountId = from.Id,
-                    ToAccountId = to.Id,
-                    Date = DateTime.Now
-                };
-
-                _context.Transactions.Add(transaction);
-                await _context.SaveChangesAsync();
-                return Ok(new { message = "Transfer successful.", balance = from.Balance });
-            }
-            catch (Exception ex) { return StatusCode(500, ex.Message); }
+            return Ok("Transfer successful");
         }
     }
 }

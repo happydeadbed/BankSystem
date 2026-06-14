@@ -1,15 +1,89 @@
 [
   {
+    "ContainingType": "BankApi.Controllers.AdminController",
+    "Method": "GetAll",
+    "RelativePath": "api/Admin",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "BankApi.Controllers.AdminController",
+    "Method": "Delete",
+    "RelativePath": "api/Admin/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "BankApi.Controllers.AuthController",
-    "Method": "Login",
-    "RelativePath": "api/Auth/login",
+    "Method": "AdminLogin",
+    "RelativePath": "api/Auth/admin-login",
     "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
-        "Name": "model",
-        "Type": "BankApi.Models.Admin",
+        "Name": "dto",
+        "Type": "BankApi.DTOs.LoginDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "BankApi.Controllers.AuthController",
+    "Method": "CustomerLogin",
+    "RelativePath": "api/Auth/customer-login",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "BankApi.DTOs.LoginDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "BankApi.Controllers.AuthController",
+    "Method": "RegisterAdmin",
+    "RelativePath": "api/Auth/register-admin",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "BankApi.DTOs.RegisterAdminDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "BankApi.Controllers.AuthController",
+    "Method": "RegisterCustomer",
+    "RelativePath": "api/Auth/register-customer",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "customer",
+        "Type": "BankApi.Models.Customer",
         "IsRequired": true
       }
     ],
@@ -81,40 +155,14 @@
   {
     "ContainingType": "BankApi.Controllers.BankAccountController",
     "Method": "Deposit",
-    "RelativePath": "api/BankAccount/{id}/deposit",
+    "RelativePath": "api/BankAccount/deposit",
     "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
-        "Name": "id",
-        "Type": "System.Int32",
-        "IsRequired": true
-      },
-      {
-        "Name": "model",
-        "Type": "BankApi.Models.Transaction",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "BankApi.Controllers.BankAccountController",
-    "Method": "Withdraw",
-    "RelativePath": "api/BankAccount/{id}/withdraw",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.Int32",
-        "IsRequired": true
-      },
-      {
-        "Name": "model",
-        "Type": "BankApi.Models.Transaction",
+        "Name": "dto",
+        "Type": "BankApi.DTOs.DepositDto",
         "IsRequired": true
       }
     ],
@@ -129,8 +177,24 @@
     "Order": 0,
     "Parameters": [
       {
-        "Name": "model",
-        "Type": "BankApi.Models.Transaction",
+        "Name": "dto",
+        "Type": "BankApi.DTOs.TransferDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "BankApi.Controllers.BankAccountController",
+    "Method": "Withdraw",
+    "RelativePath": "api/BankAccount/withdraw",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "BankApi.DTOs.WithdrawDto",
         "IsRequired": true
       }
     ],
@@ -144,6 +208,22 @@
     "IsController": true,
     "Order": 0,
     "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "BankApi.Controllers.CustomerController",
+    "Method": "GetById",
+    "RelativePath": "api/Customer/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
     "ReturnTypes": []
   },
   {
@@ -184,6 +264,32 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "BankApi.Controllers.CustomerController",
+    "Method": "CustomerSummary",
+    "RelativePath": "api/Customer/summary/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "BankApi.Controllers.DashboardController",
+    "Method": "GetKpis",
+    "RelativePath": "api/Dashboard/kpis",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "BankApi.Controllers.LoanController",
     "Method": "GetAll",
     "RelativePath": "api/Loan",
@@ -195,15 +301,31 @@
   },
   {
     "ContainingType": "BankApi.Controllers.LoanController",
-    "Method": "IssueLoan",
+    "Method": "CreateLoan",
     "RelativePath": "api/Loan",
     "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
-        "Name": "model",
-        "Type": "BankApi.Models.Loan",
+        "Name": "dto",
+        "Type": "BankApi.DTOs.CreateLoanDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "BankApi.Controllers.LoanController",
+    "Method": "GetById",
+    "RelativePath": "api/Loan/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
         "IsRequired": true
       }
     ],
@@ -227,7 +349,7 @@
   },
   {
     "ContainingType": "BankApi.Controllers.LoanController",
-    "Method": "CheckMissed",
+    "Method": "CheckMissedPayments",
     "RelativePath": "api/Loan/check-missed",
     "HttpMethod": "POST",
     "IsController": true,
@@ -237,14 +359,14 @@
   },
   {
     "ContainingType": "BankApi.Controllers.LoanController",
-    "Method": "MarkPaid",
-    "RelativePath": "api/Loan/payment/{id}/pay",
+    "Method": "PayLoan",
+    "RelativePath": "api/Loan/payment/{paymentId}",
     "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
-        "Name": "id",
+        "Name": "paymentId",
         "Type": "System.Int32",
         "IsRequired": true
       }
@@ -263,9 +385,41 @@
   },
   {
     "ContainingType": "BankApi.Controllers.MarketplaceController",
-    "Method": "Sell",
-    "RelativePath": "api/Marketplace/{id}/sell",
+    "Method": "Create",
+    "RelativePath": "api/Marketplace",
     "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "listing",
+        "Type": "BankApi.Models.MarketplaceListing",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "BankApi.Controllers.MarketplaceController",
+    "Method": "GetById",
+    "RelativePath": "api/Marketplace/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "BankApi.Controllers.MarketplaceController",
+    "Method": "Update",
+    "RelativePath": "api/Marketplace/{id}",
+    "HttpMethod": "PUT",
     "IsController": true,
     "Order": 0,
     "Parameters": [
@@ -283,8 +437,24 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "BankApi.Controllers.MarketplaceController",
+    "Method": "Delete",
+    "RelativePath": "api/Marketplace/{id}",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "BankApi.Controllers.TransactionController",
-    "Method": "GetAll",
+    "Method": "GetTransactions",
     "RelativePath": "api/Transaction",
     "HttpMethod": "GET",
     "IsController": true,
@@ -294,14 +464,14 @@
   },
   {
     "ContainingType": "BankApi.Controllers.TransactionController",
-    "Method": "GetByAccount",
-    "RelativePath": "api/Transaction/{accountId}",
+    "Method": "GetCustomerTransactions",
+    "RelativePath": "api/Transaction/customer/{customerId}",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
-        "Name": "accountId",
+        "Name": "customerId",
         "Type": "System.Int32",
         "IsRequired": true
       }
@@ -310,8 +480,8 @@
   },
   {
     "ContainingType": "BankApi.Controllers.TransactionController",
-    "Method": "Reverse",
-    "RelativePath": "api/Transaction/{id}/reverse",
+    "Method": "ReverseTransaction",
+    "RelativePath": "api/Transaction/reverse/{id}",
     "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
